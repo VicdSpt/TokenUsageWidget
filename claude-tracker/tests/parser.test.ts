@@ -22,8 +22,16 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  db.pragma('wal_checkpoint(TRUNCATE)')
   db.close()
-  fs.unlinkSync(dbPath)
+  for (let i = 0; i < 5; i++) {
+    try {
+      fs.unlinkSync(dbPath)
+      try { fs.unlinkSync(dbPath + '-wal') } catch { /* ok */ }
+      try { fs.unlinkSync(dbPath + '-shm') } catch { /* ok */ }
+      break
+    } catch { /* brief spin */ }
+  }
   fs.rmSync(tempDir, { recursive: true })
 })
 
