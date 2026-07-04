@@ -8,6 +8,10 @@ export interface RateLimits {
   sessionResetIn: string
   weeklyPercent: number
   weeklyResetAt: string
+  sessionTokens: number
+  weeklyTokens: number
+  sessionLimit: number
+  weeklyLimit: number
 }
 
 // Approximate limits (input_tokens + output_tokens, no cache reads/writes).
@@ -161,5 +165,5 @@ export function computeRateLimits(db: Database.Database, plan: 'pro' | 'max'): R
     weeklyResetAt = '---'
   }
 
-  return { sessionPercent: sessionPct, sessionResetIn, weeklyPercent: weeklyPct, weeklyResetAt }
+  return { sessionPercent: sessionPct, sessionResetIn, weeklyPercent: weeklyPct, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit: limits.session, weeklyLimit: limits.weekly }
 }

@@ -65,6 +65,10 @@ export default function App() {
         sessionResetIn={stats.rateLimits.sessionResetIn}
         weeklyPercent={stats.rateLimits.weeklyPercent}
         weeklyResetAt={stats.rateLimits.weeklyResetAt}
+        sessionTokens={stats.rateLimits.sessionTokens}
+        weeklyTokens={stats.rateLimits.weeklyTokens}
+        sessionLimit={stats.rateLimits.sessionLimit}
+        weeklyLimit={stats.rateLimits.weeklyLimit}
         lastUpdated={stats.lastUpdated}
         refreshInterval={config.refreshIntervalMin}
       />

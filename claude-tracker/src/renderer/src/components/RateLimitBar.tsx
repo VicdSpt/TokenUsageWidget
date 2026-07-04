@@ -41,17 +41,25 @@ function Bar({ icon, label, subtitle, percent, resetInfo }: BarProps) {
   )
 }
 
+function fmt(n: number): string {
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n)
+}
+
 interface RateLimitBarProps {
   sessionPercent: number
   sessionResetIn: string
   weeklyPercent: number
   weeklyResetAt: string
+  sessionTokens: number
+  weeklyTokens: number
+  sessionLimit: number
+  weeklyLimit: number
   lastUpdated: string
   refreshInterval: number
 }
 
 export default function RateLimitBar(props: RateLimitBarProps) {
-  const { sessionPercent, sessionResetIn, weeklyPercent, weeklyResetAt, lastUpdated, refreshInterval } = props
+  const { sessionPercent, sessionResetIn, weeklyPercent, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit, weeklyLimit, lastUpdated, refreshInterval } = props
 
   const ago = (() => {
     const diff = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 60000)
@@ -63,14 +71,14 @@ export default function RateLimitBar(props: RateLimitBarProps) {
       <Bar
         icon="⏱"
         label="Session"
-        subtitle="Fenêtre glissante 5h"
+        subtitle={`5h · ${fmt(sessionTokens)} / ${fmt(sessionLimit)} tokens`}
         percent={sessionPercent}
         resetInfo={sessionResetIn}
       />
       <Bar
         icon="📊"
         label="Weekly"
-        subtitle="7 derniers jours"
+        subtitle={`7j · ${fmt(weeklyTokens)} / ${fmt(weeklyLimit)} tokens`}
         percent={weeklyPercent}
         resetInfo={weeklyResetAt}
       />
