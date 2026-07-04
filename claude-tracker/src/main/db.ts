@@ -89,6 +89,12 @@ export function insertSession(db: Database.Database, session: SessionRow): void 
   `).run(session.date, session.created_at, session.model, session.tokens_in, session.tokens_out, session.messages_count)
 }
 
+export function resetData(db: Database.Database): void {
+  db.prepare('DELETE FROM sessions').run()
+  db.prepare('DELETE FROM daily_stats').run()
+  db.prepare("DELETE FROM meta WHERE key = 'last_parsed_ts'").run()
+}
+
 export function getRecentTokens(db: Database.Database, sinceMs: number): number {
   const row = db.prepare(`
     SELECT COALESCE(SUM(tokens_in + tokens_out), 0) as total

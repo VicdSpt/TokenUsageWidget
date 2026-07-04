@@ -5,7 +5,7 @@ import Settings from './components/Settings'
 import { useStats } from './hooks/useStats'
 
 export default function App() {
-  const { stats, config, refresh, saveConfig } = useStats(60_000)
+  const { stats, config, refresh, saveConfig, resetData } = useStats(60_000)
   const [showSettings, setShowSettings] = useState(false)
 
   // Listen for events from tray menu (forwarded via preload)
@@ -20,16 +20,18 @@ export default function App() {
     }
   }, [refresh])
 
+  const zoom = (config?.fontSize ?? 13) / 13
+
   if (!stats || !config) {
     return (
-      <div className="bg-[#0d1117] w-[380px] h-[520px] flex items-center justify-center rounded-xl border border-[#30363d]">
+      <div className="bg-[#0d1117] w-screen h-screen flex items-center justify-center rounded-xl border border-[#30363d]">
         <p className="text-[#8b949e] text-sm">Chargement…</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-[#0d1117] w-[380px] rounded-xl border border-[#30363d] overflow-hidden">
+    <div style={{ zoom }} className="bg-[#0d1117] w-full rounded-xl border border-[#30363d] overflow-hidden">
       {/* Draggable header */}
       <div
         className="flex items-center gap-2 px-4 py-3 border-b border-[#30363d]"
@@ -76,6 +78,7 @@ export default function App() {
           config={config}
           onSave={saveConfig}
           onClose={() => setShowSettings(false)}
+          onReset={resetData}
         />
       )}
     </div>

@@ -12,16 +12,18 @@ let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
 function createWindow(): void {
-  const saved = store.get('windowPosition' as any, null) as [number, number] | null
+  const savedBounds = store.get('windowBounds' as any, null) as { x: number; y: number; width: number; height: number } | null
 
   mainWindow = new BrowserWindow({
-    width: 380,
-    height: 520,
-    ...(saved ? { x: saved[0], y: saved[1] } : {}),
+    width:    savedBounds?.width  ?? 380,
+    height:   savedBounds?.height ?? 520,
+    minWidth:  300,
+    minHeight: 400,
+    ...(savedBounds ? { x: savedBounds.x, y: savedBounds.y } : {}),
     frame: false,
     transparent: true,
     alwaysOnTop: store.get('alwaysOnTop', true),
-    resizable: false,
+    resizable: true,
     skipTaskbar: true,
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
@@ -36,10 +38,12 @@ function createWindow(): void {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 
-  mainWindow.on('moved', () => {
-    const pos = mainWindow?.getPosition()
-    if (pos) store.set('windowPosition' as any, pos)
-  })
+  const saveBounds = () => {
+    const b = mainWindow?.getBounds()
+    if (b) store.set('windowBounds' as any, b)
+  }
+  mainWindow.on('moved', saveBounds)
+  mainWindow.on('resized', saveBounds)
 
   mainWindow.on('closed', () => {
     mainWindow = null

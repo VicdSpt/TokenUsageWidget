@@ -5,11 +5,14 @@ interface SettingsProps {
   config: AppConfig
   onSave(p: Partial<AppConfig>): Promise<void>
   onClose(): void
+  onReset(): Promise<void>
 }
 
-export default function Settings({ config, onSave, onClose }: SettingsProps) {
+export default function Settings({ config, onSave, onClose, onReset }: SettingsProps) {
   const [form, setForm] = useState<AppConfig>({ ...config })
   const [saving, setSaving] = useState(false)
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting] = useState(false)
 
   const set = <K extends keyof AppConfig>(k: K, v: AppConfig[K]) =>
     setForm(f => ({ ...f, [k]: v }))
@@ -87,9 +90,57 @@ export default function Settings({ config, onSave, onClose }: SettingsProps) {
               <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform ${form.launchAtLogin ? 'translate-x-4' : ''}`} />
             </button>
           </div>
+
+          <label className="block">
+            <div className="flex justify-between">
+              <span className="text-[#8b949e] text-xs">Taille du texte</span>
+              <span className="text-[#e6edf3] text-xs">{form.fontSize}px</span>
+            </div>
+            <input
+              type="range"
+              min={11}
+              max={18}
+              value={form.fontSize}
+              onChange={e => set('fontSize', Number(e.target.value))}
+              className="w-full mt-1 accent-[#00cc6a]"
+            />
+          </label>
         </div>
 
-        <div className="flex gap-2 mt-5">
+        <div className="border-t border-[#30363d] pt-3 mt-3">
+          {!confirmReset ? (
+            <button
+              onClick={() => setConfirmReset(true)}
+              className="w-full py-1.5 text-xs border border-[#30363d] text-[#ff7b72] rounded hover:bg-[#0d1117] hover:border-[#ff7b72]"
+            >
+              R&eacute;initialiser la synchronisation
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[#ff7b72] text-xs text-center">Effacer toutes les donn&eacute;es ?</p>
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmReset(false)} className="flex-1 py-1 text-xs border border-[#30363d] text-[#8b949e] rounded hover:bg-[#0d1117]">
+                  Non
+                </button>
+                <button
+                  disabled={resetting}
+                  onClick={async () => {
+                    setResetting(true)
+                    await onReset()
+                    setResetting(false)
+                    setConfirmReset(false)
+                    onClose()
+                  }}
+                  className="flex-1 py-1 text-xs bg-[#ff7b72] text-black font-bold rounded hover:opacity-90 disabled:opacity-50"
+                >
+                  {resetting ? '...' : 'Oui, effacer'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-3">
           <button onClick={onClose} className="flex-1 py-1.5 text-xs border border-[#30363d] text-[#8b949e] rounded hover:bg-[#0d1117]">
             Annuler
           </button>

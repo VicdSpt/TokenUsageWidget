@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import Store from 'electron-store'
 import type Database from 'better-sqlite3'
-import { getDailyStats, upsertDailyStats } from './db'
+import { getDailyStats, upsertDailyStats, resetData } from './db'
 import { computeRateLimits, parseClaude } from './parser'
 import { fetchApiUsage } from './api-client'
 import type { AppConfig, StatsPayload } from '../shared/types'
@@ -15,6 +15,7 @@ const DEFAULT_CONFIG: AppConfig = {
   plan:               'pro',
   alwaysOnTop:        true,
   launchAtLogin:      false,
+  fontSize:           13,
 }
 
 export function createStore(): Store<AppConfig> {
@@ -51,5 +52,9 @@ export function registerIpcHandlers(db: Database.Database, store: Store<AppConfi
         upsertDailyStats(db, result.date, existing?.sessions_count ?? 0, result.tokensIn, result.tokensOut)
       }
     }
+  })
+
+  ipcMain.handle('reset-data', (): void => {
+    resetData(db)
   })
 }

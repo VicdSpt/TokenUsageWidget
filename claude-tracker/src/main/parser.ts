@@ -37,13 +37,15 @@ function readJsonlFile(filePath: string): ParsedMessage[] {
         if (typeof raw !== 'string') continue
         const ts = new Date(raw).getTime()
         if (isNaN(ts)) continue
-        const usage = obj['usage'] as Record<string, number> | undefined
+        const message = obj['message'] as Record<string, unknown> | undefined
+        const usage = message?.['usage'] as Record<string, number> | undefined
+        if (!usage) continue
         out.push({
           ts,
           date: raw.slice(0, 10),
-          model: typeof obj['model'] === 'string' ? obj['model'] : 'unknown',
-          tokensIn:  usage?.['input_tokens']  ?? 0,
-          tokensOut: usage?.['output_tokens'] ?? 0,
+          model: typeof message?.['model'] === 'string' ? message['model'] as string : 'unknown',
+          tokensIn: (usage['input_tokens'] ?? 0) + (usage['cache_creation_input_tokens'] ?? 0) + (usage['cache_read_input_tokens'] ?? 0),
+          tokensOut: usage['output_tokens'] ?? 0,
         })
       } catch { /* skip malformed line */ }
     }

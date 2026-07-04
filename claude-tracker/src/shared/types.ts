@@ -25,4 +25,5 @@ export interface AppConfig {
   plan: 'pro' | 'max'
   alwaysOnTop: boolean
   launchAtLogin: boolean
+  fontSize: number
 }
