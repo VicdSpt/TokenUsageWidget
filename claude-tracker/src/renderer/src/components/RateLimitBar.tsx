@@ -55,7 +55,7 @@ export default function RateLimitBar(props: RateLimitBarProps) {
 
   const ago = (() => {
     const diff = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 60000)
-    return diff < 1 ? "less than a minute ago" : `${diff} min ago`
+    return diff < 1 ? "il y a moins d'une minute" : `il y a ${diff} min`
   })()
 
   return (
@@ -63,14 +63,14 @@ export default function RateLimitBar(props: RateLimitBarProps) {
       <Bar
         icon="⏱"
         label="Session"
-        subtitle="5h sliding window"
+        subtitle="Fenêtre glissante 5h"
         percent={sessionPercent}
         resetInfo={sessionResetIn}
       />
       <Bar
         icon="📊"
         label="Weekly"
-        subtitle="Last 7 days"
+        subtitle="7 derniers jours"
         percent={weeklyPercent}
         resetInfo={weeklyResetAt}
       />
