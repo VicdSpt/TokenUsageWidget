@@ -56,7 +56,12 @@ export default function Heatmap({ dailyStats }: HeatmapProps) {
   })
 
   return (
-    <div className="px-4 pb-4 select-none">
+    <div
+      className="px-4 pb-4 select-none"
+      onMouseMove={(e) => {
+        if (tip) setTip(prev => prev ? { ...prev, x: e.clientX + 12, y: e.clientY - 38 } : null)
+      }}
+    >
       <p className="text-[#8b949e] text-xs mb-2">Activité 2026</p>
       <div className="relative overflow-x-auto">
         {/* Month labels row */}
@@ -96,9 +101,8 @@ export default function Heatmap({ dailyStats }: HeatmapProps) {
                     }}
                     onMouseEnter={(e) => {
                       if (cell.future) return
-                      const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
                       const label = new Date(cell.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-                      setTip({ text: `${cell.count} session${cell.count !== 1 ? 's' : ''} · ${label}`, x: r.left, y: r.top - 30 })
+                      setTip({ text: `${cell.count} session${cell.count !== 1 ? 's' : ''} · ${label}`, x: e.clientX + 12, y: e.clientY - 38 })
                     }}
                     onMouseLeave={() => setTip(null)}
                   />
