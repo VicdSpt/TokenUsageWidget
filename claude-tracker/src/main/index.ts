@@ -5,8 +5,6 @@ import { createStore, registerIpcHandlers } from './ipc-handlers'
 import { startScheduler } from './scheduler'
 
 const store = createStore()
-const dbPath = path.join(app.getPath('userData'), 'tracker.db')
-const db = initDb(dbPath)
 
 let mainWindow: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -32,8 +30,8 @@ function createWindow(): void {
     },
   })
 
-  if (!app.isPackaged) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']!)
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
@@ -88,6 +86,8 @@ function createTray(): void {
 }
 
 app.whenReady().then(() => {
+  const dbPath = path.join(app.getPath('userData'), 'tracker.db')
+  const db = initDb(dbPath)
   registerIpcHandlers(db, store)
   createWindow()
   createTray()
