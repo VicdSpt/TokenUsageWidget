@@ -10,9 +10,11 @@ export interface RateLimits {
   weeklyResetAt: string
 }
 
+// Approximate limits (input_tokens + output_tokens, no cache reads/writes).
+// Anthropic does not publish exact token counts; these match typical Pro/Max capacity.
 const PLAN_LIMITS = {
-  pro: { session: 40_000,  weekly: 200_000 },
-  max: { session: 100_000, weekly: 500_000 },
+  pro: { session:  88_000, weekly:   440_000 },
+  max: { session: 440_000, weekly: 2_200_000 },
 }
 
 const SESSION_GAP_MS = 30 * 60 * 1000
@@ -44,7 +46,8 @@ function readJsonlFile(filePath: string): ParsedMessage[] {
           ts,
           date: raw.slice(0, 10),
           model: typeof message?.['model'] === 'string' ? message['model'] as string : 'unknown',
-          tokensIn: (usage['input_tokens'] ?? 0) + (usage['cache_creation_input_tokens'] ?? 0) + (usage['cache_read_input_tokens'] ?? 0),
+          // Only count real new tokens — cache reads are cheap and can be millions per session.
+          tokensIn: usage['input_tokens'] ?? 0,
           tokensOut: usage['output_tokens'] ?? 0,
         })
       } catch { /* skip malformed line */ }
