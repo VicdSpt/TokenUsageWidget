@@ -1,22 +1,13 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer } from 'electron'
+import type { StatsPayload, AppConfig } from '../shared/types'
 
-// Custom APIs for renderer
-const api = {}
+contextBridge.exposeInMainWorld('api', {
+  getStats:     (): Promise<StatsPayload>              => ipcRenderer.invoke('get-stats'),
+  getConfig:    (): Promise<AppConfig>                 => ipcRenderer.invoke('get-config'),
+  setConfig:    (p: Partial<AppConfig>): Promise<void> => ipcRenderer.invoke('set-config', p),
+  forceRefresh: (): Promise<void>                      => ipcRenderer.invoke('force-refresh'),
+})
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-}
+// Forward tray-menu events from main to renderer as DOM events
+ipcRenderer.on('tray-refresh',       () => window.dispatchEvent(new Event('ipc-refresh')))
+ipcRenderer.on('tray-open-settings', () => window.dispatchEvent(new Event('ipc-open-settings')))
