@@ -15,9 +15,9 @@ export function startScheduler(db: Database.Database, store: Store<AppConfig>): 
   }
 
   const intervalMin = store.get('refreshIntervalMin', 15)
-  task = cron.schedule(`*/${intervalMin} * * * *`, run)
+  task = cron.schedule(`*/${intervalMin} * * * *`, () => run().catch(console.error))
 
-  run() // first run immediately
+  run().catch(console.error) // initial run
 
   return () => task?.stop()
 }
