@@ -25,10 +25,9 @@ export function registerIpcHandlers(db: Database.Database, store: Store<AppConfi
   ipcMain.handle('get-stats', async (): Promise<StatsPayload> => {
     const cfg = store.store
     const today = new Date().toISOString().slice(0, 10)
-    const yearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
     return {
       rateLimits:  computeRateLimits(db, cfg.plan),
-      dailyStats:  getDailyStats(db, yearAgo, today),
+      dailyStats:  getDailyStats(db, '2026-01-01', today),
       lastUpdated: new Date().toISOString(),
     }
   })

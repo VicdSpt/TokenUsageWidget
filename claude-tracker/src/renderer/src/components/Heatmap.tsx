@@ -19,20 +19,25 @@ export default function Heatmap({ dailyStats }: HeatmapProps) {
     return m
   }, [dailyStats])
 
-  // Build 53-week grid ending today
+  // Build grid from Jan 1 2026 to today
   const today = new Date(); today.setHours(0,0,0,0)
-  const start = new Date(today); start.setDate(start.getDate() - 364)
-  // Align start to Monday
-  const dow = start.getDay()
+  const jan1 = new Date(2026, 0, 1)
+  // Align start to the Monday on or before Jan 1 2026
+  const dow = jan1.getDay()
+  const start = new Date(jan1)
   start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1))
+
+  // Compute number of weeks needed to cover from start to today
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000
+  const numWeeks = Math.ceil((today.getTime() - start.getTime()) / msPerWeek) + 1
 
   type Cell = { date: string; count: number; future: boolean }
   const weeks: Cell[][] = []
   const cur = new Date(start)
-  for (let w = 0; w < 53; w++) {
+  for (let w = 0; w < numWeeks; w++) {
     const week: Cell[] = []
     for (let d = 0; d < 7; d++) {
-      const dateStr = cur.toISOString().slice(0, 10)
+      const dateStr = cur.toLocaleDateString('fr-CA') // YYYY-MM-DD local
       week.push({ date: dateStr, count: map.get(dateStr) ?? 0, future: cur > today })
       cur.setDate(cur.getDate() + 1)
     }
@@ -52,7 +57,7 @@ export default function Heatmap({ dailyStats }: HeatmapProps) {
 
   return (
     <div className="px-4 pb-4 select-none">
-      <p className="text-[#8b949e] text-xs mb-2">Activité — 53 semaines</p>
+      <p className="text-[#8b949e] text-xs mb-2">Activité 2026</p>
       <div className="relative overflow-x-auto">
         {/* Month labels row */}
         <div className="relative h-4 ml-6 mb-1">
