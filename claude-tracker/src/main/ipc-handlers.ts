@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron'
 import Store from 'electron-store'
 import type Database from 'better-sqlite3'
-import { getDailyStats } from './db'
+import { getDailyStats, upsertDailyStats } from './db'
 import { computeRateLimits, parseClaude } from './parser'
 import { fetchApiUsage } from './api-client'
 import type { AppConfig, StatsPayload } from '../shared/types'
@@ -45,6 +45,12 @@ export function registerIpcHandlers(db: Database.Database, store: Store<AppConfi
   ipcMain.handle('force-refresh', async (): Promise<void> => {
     const cfg = store.store
     await parseClaude(cfg.claudePath, db)
-    if (cfg.apiKey) await fetchApiUsage(cfg.apiKey)
+    if (cfg.apiKey) {
+      const result = await fetchApiUsage(cfg.apiKey)
+      if (result) {
+        const existing = db.prepare('SELECT sessions_count FROM daily_stats WHERE date = ?').get(result.date) as { sessions_count: number } | undefined
+        upsertDailyStats(db, result.date, existing?.sessions_count ?? 0, result.tokensIn, result.tokensOut)
+      }
+    }
   })
 }

@@ -142,8 +142,19 @@ export function computeRateLimits(db: Database.Database, plan: 'pro' | 'max'): R
   const resetM = Math.floor((resetMs % 3600000) / 60000)
   const sessionResetIn = `${resetH}h${String(resetM).padStart(2, '0')}`
 
-  const weeklyResetDate = new Date(sevenDAgo + 7 * 24 * 60 * 60 * 1000)
-  const weeklyResetAt = weeklyResetDate.toLocaleDateString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+  // Find oldest date in the weekly window that has data
+  const oldestWeeklyRow = db.prepare(
+    'SELECT MIN(date) as oldest FROM daily_stats WHERE date >= ?'
+  ).get(new Date(sevenDAgo).toISOString().slice(0, 10)) as { oldest: string | null }
+
+  let weeklyResetAt: string
+  if (oldestWeeklyRow.oldest) {
+    const resetDate = new Date(oldestWeeklyRow.oldest)
+    resetDate.setDate(resetDate.getDate() + 7)
+    weeklyResetAt = resetDate.toLocaleDateString('fr-FR', { weekday: 'short', hour: '2-digit', minute: '2-digit' })
+  } else {
+    weeklyResetAt = '---'
+  }
 
   return { sessionPercent: sessionPct, sessionResetIn, weeklyPercent: weeklyPct, weeklyResetAt }
 }

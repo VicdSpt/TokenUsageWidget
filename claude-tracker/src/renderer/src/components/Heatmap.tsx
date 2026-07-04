@@ -52,7 +52,7 @@ export default function Heatmap({ dailyStats }: HeatmapProps) {
 
   return (
     <div className="px-4 pb-4 select-none">
-      <p className="text-[#8b949e] text-xs mb-2">Activité — 52 semaines</p>
+      <p className="text-[#8b949e] text-xs mb-2">Activité — 53 semaines</p>
       <div className="relative overflow-x-auto">
         {/* Month labels row */}
         <div className="relative h-4 ml-6 mb-1">
