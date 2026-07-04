@@ -1,74 +1,94 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
+import path from 'path'
+import { initDb } from './db'
+import { createStore, registerIpcHandlers } from './ipc-handlers'
+import { startScheduler } from './scheduler'
+
+const store = createStore()
+const dbPath = path.join(app.getPath('userData'), 'tracker.db')
+const db = initDb(dbPath)
+
+let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
 
 function createWindow(): void {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+  const saved = store.get('windowPosition' as any, null) as [number, number] | null
+
+  mainWindow = new BrowserWindow({
+    width: 380,
+    height: 520,
+    ...(saved ? { x: saved[0], y: saved[1] } : {}),
+    frame: false,
+    transparent: true,
+    alwaysOnTop: store.get('alwaysOnTop', true),
+    resizable: false,
+    skipTaskbar: true,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
   })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
-
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
-
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  if (!app.isPackaged) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']!)
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
+
+  mainWindow.on('moved', () => {
+    const pos = mainWindow?.getPosition()
+    if (pos) store.set('windowPosition' as any, pos)
+  })
+
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
+function buildTrayMenu(): Menu {
+  const onTop = store.get('alwaysOnTop', true)
+  return Menu.buildFromTemplate([
+    { label: 'Claude Tracker', enabled: false },
+    { type: 'separator' },
+    { label: 'Actualiser', click: () => mainWindow?.webContents.send('tray-refresh') },
+    {
+      label: 'Always on Top',
+      type: 'checkbox',
+      checked: onTop,
+      click: () => {
+        const next = !onTop
+        store.set('alwaysOnTop', next)
+        mainWindow?.setAlwaysOnTop(next)
+        tray?.setContextMenu(buildTrayMenu())
+      },
+    },
+    { type: 'separator' },
+    { label: 'Paramètres', click: () => mainWindow?.webContents.send('tray-open-settings') },
+    { type: 'separator' },
+    { label: 'Quitter', click: () => app.quit() },
+  ])
+}
+
+function createTray(): void {
+  const icon = nativeImage
+    .createFromPath(path.join(__dirname, '../../resources/icon.png'))
+    .resize({ width: 16, height: 16 })
+  tray = new Tray(icon)
+  tray.setToolTip('Claude Tracker')
+  tray.setContextMenu(buildTrayMenu())
+  tray.on('click', () => {
+    if (mainWindow?.isVisible()) mainWindow.hide()
+    else mainWindow?.show()
+  })
+}
+
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
-
-  // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
-
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
+  registerIpcHandlers(db, store)
   createWindow()
-
-  app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  createTray()
+  startScheduler(db, store)
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+// Keep app alive via tray even when window is closed
+app.on('window-all-closed', () => { /* intentionally empty — tray keeps app alive */ })
