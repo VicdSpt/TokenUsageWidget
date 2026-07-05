@@ -54,12 +54,13 @@ interface RateLimitBarProps {
   weeklyTokens: number
   sessionLimit: number
   weeklyLimit: number
+  source: 'api' | 'estimate'
   lastUpdated: string
   refreshInterval: number
 }
 
 export default function RateLimitBar(props: RateLimitBarProps) {
-  const { sessionPercent, sessionResetIn, weeklyPercent, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit, weeklyLimit, lastUpdated, refreshInterval } = props
+  const { sessionPercent, sessionResetIn, weeklyPercent, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit, weeklyLimit, source, lastUpdated, refreshInterval } = props
 
   const ago = (() => {
     const diff = Math.floor((Date.now() - new Date(lastUpdated).getTime()) / 60000)
@@ -71,14 +72,14 @@ export default function RateLimitBar(props: RateLimitBarProps) {
       <Bar
         icon="⏱"
         label="Session"
-        subtitle={`5h · ${fmt(sessionTokens)} / ${fmt(sessionLimit)} tokens`}
+        subtitle={source === 'api' ? 'Fenêtre 5h' : `5h · ~${fmt(sessionTokens)} / ${fmt(sessionLimit)} tokens`}
         percent={sessionPercent}
         resetInfo={sessionResetIn}
       />
       <Bar
         icon="📊"
         label="Weekly"
-        subtitle={`7j · ${fmt(weeklyTokens)} / ${fmt(weeklyLimit)} tokens`}
+        subtitle={source === 'api' ? '7 jours' : `7j · ~${fmt(weeklyTokens)} / ${fmt(weeklyLimit)} tokens`}
         percent={weeklyPercent}
         resetInfo={weeklyResetAt}
       />

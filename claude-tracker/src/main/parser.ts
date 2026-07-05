@@ -3,16 +3,7 @@ import path from 'path'
 import { getMeta, setMeta, upsertDailyStats, insertSession, getRecentTokens, getDailyStats } from './db'
 import type Database from 'better-sqlite3'
 
-export interface RateLimits {
-  sessionPercent: number
-  sessionResetIn: string
-  weeklyPercent: number
-  weeklyResetAt: string
-  sessionTokens: number
-  weeklyTokens: number
-  sessionLimit: number
-  weeklyLimit: number
-}
+import type { RateLimits } from '../shared/types'
 
 // Approximate limits (input_tokens + output_tokens, no cache reads/writes).
 // Anthropic does not publish exact token counts; these match typical Pro/Max capacity.
@@ -165,5 +156,5 @@ export function computeRateLimits(db: Database.Database, plan: 'pro' | 'max'): R
     weeklyResetAt = '---'
   }
 
-  return { sessionPercent: sessionPct, sessionResetIn, weeklyPercent: weeklyPct, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit: limits.session, weeklyLimit: limits.weekly }
+  return { sessionPercent: sessionPct, sessionResetIn, weeklyPercent: weeklyPct, weeklyResetAt, sessionTokens, weeklyTokens, sessionLimit: limits.session, weeklyLimit: limits.weekly, source: 'estimate' }
 }

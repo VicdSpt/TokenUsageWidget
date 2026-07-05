@@ -69,6 +69,7 @@ export default function App() {
         weeklyTokens={stats.rateLimits.weeklyTokens}
         sessionLimit={stats.rateLimits.sessionLimit}
         weeklyLimit={stats.rateLimits.weeklyLimit}
+        source={stats.rateLimits.source}
         lastUpdated={stats.lastUpdated}
         refreshInterval={config.refreshIntervalMin}
       />

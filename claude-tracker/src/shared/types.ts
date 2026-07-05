@@ -10,6 +10,13 @@ export interface RateLimits {
   sessionResetIn: string
   weeklyPercent: number
   weeklyResetAt: string
+  sessionTokens: number
+  weeklyTokens: number
+  sessionLimit: number
+  weeklyLimit: number
+  // 'api' = real percentages from Anthropic's OAuth usage endpoint;
+  // 'estimate' = local fallback computed from JSONL token counts
+  source: 'api' | 'estimate'
 }
 
 export interface StatsPayload {

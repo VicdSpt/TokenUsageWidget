@@ -3,6 +3,7 @@ import Store from 'electron-store'
 import type Database from 'better-sqlite3'
 import { getDailyStats, upsertDailyStats, resetData } from './db'
 import { computeRateLimits, parseClaude } from './parser'
+import { fetchOAuthUsage, oauthToRateLimits } from './oauth-usage'
 import { fetchApiUsage } from './api-client'
 import type { AppConfig, StatsPayload } from '../shared/types'
 import os from 'os'
@@ -26,8 +27,11 @@ export function registerIpcHandlers(db: Database.Database, store: Store<AppConfi
   ipcMain.handle('get-stats', async (): Promise<StatsPayload> => {
     const cfg = store.store
     const today = new Date().toISOString().slice(0, 10)
+    // Prefer the real percentages from Anthropic's OAuth usage endpoint (same data
+    // as Claude Code's /usage). Fall back to local estimation if unavailable.
+    const oauth = await fetchOAuthUsage()
     return {
-      rateLimits:  computeRateLimits(db, cfg.plan),
+      rateLimits:  oauth ? oauthToRateLimits(oauth) : computeRateLimits(db, cfg.plan),
       dailyStats:  getDailyStats(db, '2026-01-01', today),
       lastUpdated: new Date().toISOString(),
     }
